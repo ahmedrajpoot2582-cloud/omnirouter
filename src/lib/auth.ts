@@ -8,13 +8,14 @@ export const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_STRING);
 
 export const AUTH_COOKIE_NAME = 'omnirouter_session';
 
-export const ADMIN_CREDENTIALS = {
-  email: process.env.ADMIN_EMAIL || 'admin@omnirouter.ai',
-  password: process.env.ADMIN_PASSWORD || 'omnirouter2026',
-};
+export const MANAGEMENT_PASSWORD =
+  process.env.MANAGEMENT_PASSWORD ||
+  process.env.INITIAL_PASSWORD ||
+  process.env.ADMIN_PASSWORD ||
+  'omnirouter2026';
 
-export async function createToken(email: string) {
-  return await new SignJWT({ email, role: 'admin' })
+export async function createToken() {
+  return await new SignJWT({ role: 'admin', authenticated: true })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('30d')
@@ -25,7 +26,7 @@ export async function verifySession(token?: string) {
   if (!token) return null;
   try {
     const verified = await jwtVerify(token, JWT_SECRET);
-    return verified.payload as { email: string; role: string };
+    return verified.payload as { role: string; authenticated: boolean };
   } catch {
     return null;
   }

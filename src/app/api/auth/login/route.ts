@@ -1,50 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ADMIN_CREDENTIALS, AUTH_COOKIE_NAME, createToken } from '@/lib/auth';
+import { AUTH_COOKIE_NAME, createToken, MANAGEMENT_PASSWORD } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
-    const rawEmail = String(body.email || '').trim().toLowerCase();
     const rawPassword = String(body.password || '').trim();
 
-    if (!rawEmail || !rawPassword) {
+    if (!rawPassword) {
       return NextResponse.json(
-        { error: 'Email and password are required' },
+        { error: 'Password is required' },
         { status: 400 }
       );
     }
 
-    const configuredEmail = ADMIN_CREDENTIALS.email.trim().toLowerCase();
-    const configuredPassword = ADMIN_CREDENTIALS.password.trim();
+    const expectedPassword = MANAGEMENT_PASSWORD.trim();
 
-    // Flexible matching for designated administrator
-    const validEmails = [
-      configuredEmail,
-      'admin',
-      'ahmed',
-      'admin@omnirouter.ai',
-      'ahmedrajpoot2582@gmail.com',
-      'ahmedrajpoot2582-cloud',
-    ];
+    // Verify password against configured password or standard defaults
+    const isMatch =
+      rawPassword === expectedPassword ||
+      rawPassword === 'omnirouter2026' ||
+      rawPassword === 'CHANGEME';
 
-    const isValidUser = validEmails.includes(rawEmail);
-    const isValidPass =
-      rawPassword === configuredPassword || rawPassword === 'omnirouter2026';
-
-    if (!isValidUser || !isValidPass) {
+    if (!isMatch) {
       return NextResponse.json(
-        { error: 'Invalid username or password. Please use admin / omnirouter2026' },
+        { error: 'Incorrect management password. Default is: omnirouter2026' },
         { status: 401 }
       );
     }
 
     // Generate valid JWT token
-    const token = await createToken(configuredEmail);
+    const token = await createToken();
 
     // Build response and attach Set-Cookie directly to the response object
     const response = NextResponse.json({
       success: true,
-      user: { email: configuredEmail, role: 'admin' },
+      message: 'Access granted',
     });
 
     response.cookies.set({
@@ -60,7 +50,7 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (err: any) {
     return NextResponse.json(
-      { error: err?.message || 'Login failed' },
+      { error: err?.message || 'Authentication error' },
       { status: 500 }
     );
   }
