@@ -42,3 +42,4 @@ export interface RouteExecutionResult {
   latencyMs: number;
   tokensEstimated: { prompt: number; completion: number; total: number };
 }
+

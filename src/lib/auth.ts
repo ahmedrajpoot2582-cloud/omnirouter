@@ -51,3 +51,4 @@ export async function getCurrentUser() {
 export async function clearSession() {
   cookies().delete(AUTH_COOKIE_NAME);
 }
+
